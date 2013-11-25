@@ -523,5 +523,8 @@
     <None Include="..\shaders\gl2\Random.fs">
       <Filter>EDAN35</Filter>
     </None>
+    <None Include="..\shaders\gl2\Splat.fs">
+      <Filter>EDAN35</Filter>
+    </None>
   </ItemGroup>
 </Project>

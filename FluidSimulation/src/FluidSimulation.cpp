@@ -14,6 +14,7 @@ ShaderProgram *jacobiShader;
 ShaderProgram *divergenceShader;
 ShaderProgram *subtractGradientShader;
 ShaderProgram *randomShader;
+ShaderProgram *splatShader;
 
 float timeStep;
 float currentFrameTime;
@@ -73,9 +74,10 @@ void RCInit()
 	jacobiShader = SceneGraph::createShaderProgram("JacobiSP", 0, "FluidVertex.vs", "Jacobi.fs", 0);
 	divergenceShader = SceneGraph::createShaderProgram("DivergenceSP", 0, "FluidVertex.vs", "Divergence.fs", 0);
 	subtractGradientShader = SceneGraph::createShaderProgram("SubtractGradientSP", 0, "FluidVertex.vs", "SubtractGradient.fs", 0);
+	splatShader = SceneGraph::createShaderProgram("SplatSP", 0, "FluidVertex.vs", "Splat.fs", 0);
+	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 
-	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	randomShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityCurrent);
@@ -95,7 +97,7 @@ u32 RCUpdate()
 {
 	cameraControls();
 	currentFrameTime = Platform::getFrameTime();
-	timeStep = 100.0f*(currentFrameTime - lastFrameTime);
+	timeStep = 200.0f*(currentFrameTime - lastFrameTime);
 	lastFrameTime = currentFrameTime;
 
 	
@@ -115,16 +117,8 @@ u32 RCUpdate()
 	RenderTarget *vTemp = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp;
-
-	/*
-	//Compute divergence, pressure
-	Renderer::setRenderTarget(0);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
-	Renderer::render(*fullScreenQuad, divergenceShader);
-	*/
 	
-	//Compute jacobi iterations, pressure
+	//Compute jacobi iterations, diffusion
 	jacobiShader->setValue("alpha", 1.0f);
 	jacobiShader->setValue("iBeta", 0.2f);
 	jacobiShader->setValue("invRes", inv_res);
@@ -141,6 +135,20 @@ u32 RCUpdate()
 		velocityCurrent = velocityTemp;
 		velocityTemp = vTemp;
 	}
+	
+	/*
+	vec2f pos = vec2f(300.0f, 10.0f);
+	
+	splatShader->setValue("radius", 30.0f);
+	splatShader->setValue("invRes", inv_res);
+	splatShader->setValue("pos", pos);
+
+	Renderer::setRenderTarget(velocityCurrent);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	Renderer::render(*fullScreenQuad, splatShader);
+	*/
+
 
 	/*
 	//compute gradient subtraction, pressure
@@ -172,17 +180,7 @@ void cameraControls()
 	move = 0.0f;
 	strafe = 0.0f;
 	up = 0.0f;
-
-	if (mouse[MouseButtonLeft]) {
-
-		/* Relative position */
-
-		vec2f diff = pos - prev_pos;
-
-		camera_rotation.x -= diff.x * 2.0f;
-		camera_rotation.y -= diff.y * 2.0f;
-
-	}
+	
 	float speed = 12.0f;
 	if (keys[KeyShift])
 		speed = 3.0f;
