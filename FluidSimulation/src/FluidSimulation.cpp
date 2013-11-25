@@ -3,6 +3,7 @@
 #if defined EDAN35
 
 #include "RenderChimp.h"
+#include <iostream>
 
 
 World *world;
@@ -21,8 +22,10 @@ vec2f inv_res;
 
 RenderTarget *velocityCurrent;
 RenderTarget *velocityTemp;
+RenderTarget *jacobiCurrent;
+RenderTarget *jacobiTemp;
 
-
+vec4f dissipation;
 
 /* Functions foar loading geometry */
 Geometry *loadFullscreenQuad();
@@ -55,6 +58,8 @@ void RCInit()
 	inv_res.x = 1.f /  (f32)x;
 	inv_res.y = 1.f / (f32)y;
 
+	dissipation = vec4f(1.0, 1.0, 1.0, 1.0);
+
 	camera = SceneGraph::createCamera(0);
 	camera->setPerspectiveProjection(fov, aspect, near_far.x, near_far.y);
     camera->translate(0,2,0);
@@ -64,6 +69,8 @@ void RCInit()
 
 	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	jacobiTemp = SceneGraph::createRenderTarget("JacobiTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	jacobiCurrent = SceneGraph::createRenderTarget("JacobiCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -73,6 +80,8 @@ void RCInit()
 	fullScreenQuad = loadFullscreenQuad();
 
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
+	randomShader->setValue("invRes", inv_res);
+
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
@@ -90,11 +99,14 @@ u32 RCUpdate()
 {
 	cameraControls();
 	currentFrameTime = Platform::getFrameTime();
-	timeStep = lastFrameTime - currentFrameTime;Platform::getFrameTime();
+	timeStep = currentFrameTime - lastFrameTime;
 	lastFrameTime = currentFrameTime;
+	timeStep = 10;
 	
+	printf ("timeStep: %f \n", timeStep);
+
 	//Advect velocity
-	advectShader->setValue("time", timeStep);
+	advectShader->setValue("timeStep", timeStep);
 	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
 	advectShader->setTexture("xTexture", velocityCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
@@ -104,30 +116,40 @@ u32 RCUpdate()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, advectShader);
 
-	velocityCurrent->setHandle(velocityTemp->getTexture(0));
-	
-	
+	RenderTarget *vTemp = velocityCurrent;
+	velocityCurrent = velocityTemp;
+	velocityTemp = vTemp;
 
+	/*
 	//Compute divergence, pressure
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, divergenceShader);
+	*/
 	
 	//Compute jacobi iterations, pressure
-	Renderer::setRenderTarget(0);
+	jacobiShader->setValue("alpha", );
+	jacobiShader->setValue("beta", );
+	jacobiShader->setTexture("x", );
+	jacobiShader->setValue("b", dissipation);
+	jacobiShader->setValue("invRes", inv_res);
+
+	Renderer::setRenderTarget(jacobiTemp);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
+
 	for(int i=0; i<=40; i++){
 		Renderer::render(*fullScreenQuad, jacobiShader);
 	}
-	
+
+	/*
 	//compute gradient subtraction, pressure
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, subtractGradientShader);
-	
+	*/
 
 	return 0;
 }

@@ -2,4 +2,5 @@ FluidSimulation/win32/vs/OpenGL 2.0, Debug
 FluidSimulation/win32/bin/RenderChimp*
 FluidSimulation/win32/RenderChimp.sdf
 FluidSimulation/win32/RenderChimp.opensdf
+FluidSimulation/win32/RenderChimp.suo
 FluidSimulation/win32/ipch
