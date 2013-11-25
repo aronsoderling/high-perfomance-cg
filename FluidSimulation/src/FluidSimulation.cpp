@@ -22,8 +22,6 @@ vec2f inv_res;
 
 RenderTarget *velocityCurrent;
 RenderTarget *velocityTemp;
-RenderTarget *jacobiCurrent;
-RenderTarget *jacobiTemp;
 
 vec4f dissipation;
 
@@ -69,8 +67,6 @@ void RCInit()
 
 	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	jacobiTemp = SceneGraph::createRenderTarget("JacobiTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	jacobiCurrent = SceneGraph::createRenderTarget("JacobiCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -99,9 +95,9 @@ u32 RCUpdate()
 {
 	cameraControls();
 	currentFrameTime = Platform::getFrameTime();
-	timeStep = currentFrameTime - lastFrameTime;
+	timeStep = 100.0f*(currentFrameTime - lastFrameTime);
 	lastFrameTime = currentFrameTime;
-	timeStep = 10;
+
 	
 	printf ("timeStep: %f \n", timeStep);
 
@@ -129,18 +125,21 @@ u32 RCUpdate()
 	*/
 	
 	//Compute jacobi iterations, pressure
-	jacobiShader->setValue("alpha", );
-	jacobiShader->setValue("beta", );
-	jacobiShader->setTexture("x", );
-	jacobiShader->setValue("b", dissipation);
+	jacobiShader->setValue("alpha", 1.0f);
+	jacobiShader->setValue("iBeta", 0.2f);
 	jacobiShader->setValue("invRes", inv_res);
 
-	Renderer::setRenderTarget(jacobiTemp);
+	Renderer::setRenderTarget(velocityTemp);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 
-	for(int i=0; i<=40; i++){
+	for(int i=0; i<=20; i++){
+		jacobiShader->setTexture("x", velocityCurrent->getTexture(0));
+		jacobiShader->setTexture("b", velocityCurrent->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
+		RenderTarget *vTemp = velocityCurrent;
+		velocityCurrent = velocityTemp;
+		velocityTemp = vTemp;
 	}
 
 	/*
