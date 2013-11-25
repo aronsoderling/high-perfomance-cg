@@ -12,9 +12,15 @@ ShaderProgram *advectShader;
 ShaderProgram *jacobiShader;
 ShaderProgram *divergenceShader;
 ShaderProgram *subtractGradientShader;
+ShaderProgram *randomShader;
 
-RenderTarget *velocityNew;
-RenderTarget *velocityOld;
+float timeStep;
+float currentFrameTime;
+float lastFrameTime;
+vec2f inv_res;
+
+RenderTarget *velocityCurrent;
+RenderTarget *velocityTemp;
 
 
 
@@ -36,7 +42,6 @@ void RCInit()
 	RenderState *state;
 	u32 x, y;
 	vec2f near_far;
-	vec2f inv_res;
 	vec2f res;
 	f32 fov, aspect;
 
@@ -57,8 +62,8 @@ void RCInit()
 	world->attachChild(camera);
 	world->setActiveCamera(camera);
 
-	velocityOld = SceneGraph::createRenderTarget("VelocityRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	velocityNew = SceneGraph::createRenderTarget("VelocityRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -66,6 +71,12 @@ void RCInit()
 	divergenceShader = SceneGraph::createShaderProgram("DivergenceSP", 0, "FluidVertex.vs", "Divergence.fs", 0);
 	subtractGradientShader = SceneGraph::createShaderProgram("SubtractGradientSP", 0, "FluidVertex.vs", "SubtractGradient.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
+
+	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
+	Renderer::setRenderTarget(velocityCurrent);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	Renderer::render(*fullScreenQuad, randomShader);
 
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
@@ -78,16 +89,24 @@ void RCInit()
 u32 RCUpdate()
 {
 	cameraControls();
-	float time = Platform::getFrameTime();
+	currentFrameTime = Platform::getFrameTime();
+	timeStep = lastFrameTime - currentFrameTime;Platform::getFrameTime();
+	lastFrameTime = currentFrameTime;
 	
 	//Advect velocity
-	advectShader->setValue("time", time);
-	advectShader->setTexture("velocityTexture", velocityOld->getTexture(0));
+	advectShader->setValue("time", timeStep);
+	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
+	advectShader->setTexture("xTexture", velocityCurrent->getTexture(0));
+	advectShader->setValue("invRes", inv_res);
 
-	Renderer::setRenderTarget(velocityNew);
+	Renderer::setRenderTarget(velocityTemp);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, advectShader);
+
+	velocityCurrent->setHandle(velocityTemp->getTexture(0));
+	
+	
 
 	//Compute divergence, pressure
 	Renderer::setRenderTarget(0);
@@ -108,6 +127,7 @@ u32 RCUpdate()
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, subtractGradientShader);
+	
 
 	return 0;
 }

@@ -210,6 +210,7 @@
     <None Include="..\shaders\gl2\LambertTexture.vs" />
     <None Include="..\shaders\gl2\Normals.fs" />
     <None Include="..\shaders\gl2\Normals.vs" />
+    <None Include="..\shaders\gl2\Random.fs" />
     <None Include="..\shaders\gl2\SubtractGradient.fs" />
     <None Include="..\shaders\gl3\Axis.fs" />
     <None Include="..\shaders\gl3\Axis.vs" />

@@ -1,6 +1,14 @@
-uniform float time;
+uniform float timeStep;
+uniform vec2 invRes;
+uniform sampler2D velocityTexture;
+uniform sampler2D xTexture;
 
+varying vec4 gl_FragCoord;
 void main()
 {
-	gl_FragData[0] = vec4(1.0,0.0,0.0,1.0);
+	vec2 coord = invRes * gl_FragCoord.xy;
+
+	vec2 pos = coord - timeStep *invRes*texture2D(velocityTexture, coord).xy; 
+
+	gl_FragData[0] = texture2D(xTexture, pos);
 }
