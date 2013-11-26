@@ -213,6 +213,7 @@
     <None Include="..\shaders\gl2\Random.fs" />
     <None Include="..\shaders\gl2\Splat.fs" />
     <None Include="..\shaders\gl2\SubtractGradient.fs" />
+    <None Include="..\shaders\gl2\Visualize.fs" />
     <None Include="..\shaders\gl3\Axis.fs" />
     <None Include="..\shaders\gl3\Axis.vs" />
     <None Include="..\shaders\gl3\Camera.fs" />

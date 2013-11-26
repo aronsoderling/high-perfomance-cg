@@ -9,7 +9,7 @@ void main()
 	vec2 dist = pos - gl_FragCoord.xy;
 	float distance = length(dist);
 	if(distance < radius){
-		float alpha = 1.0;//length(normalize(dist));
+		float alpha = length(normalize(dist));
 		color = vec4(0.8, 0.8, 0.8, alpha);
 	}
 

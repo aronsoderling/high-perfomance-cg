@@ -1,4 +1,3 @@
-uniform float alpha;
 uniform float iBeta;
 
 uniform sampler2D x;
@@ -17,5 +16,5 @@ void main()
 
 	vec4 bC = texture2D(b, coords);
 
-	gl_FragData[0] = (xL + xR + xB + xT + alpha * bC) * iBeta;
+	gl_FragData[0] = (xL + xR + xB + xT - bC) * iBeta;
 }
