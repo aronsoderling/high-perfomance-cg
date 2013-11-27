@@ -24,10 +24,12 @@ vec2f inv_res;
 
 RenderTarget *velocityCurrent;
 RenderTarget *velocityTemp;
+RenderTarget *vTemp1;
+RenderTarget *vTemp2;
+RenderTarget *vTemp3;
 RenderTarget *divergence;
 RenderTarget *pressureCurrent;
 RenderTarget *pressureTemp;
-RenderTarget *vTemp;
 RenderTarget *pTemp;
 RenderTarget *density;
 
@@ -90,14 +92,14 @@ void RCInit()
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
-	
+	/*
 	randomShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
-	
+	*/
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
 }
@@ -127,9 +129,9 @@ u32 RCUpdate()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, advectShader);
 
-	/*vTemp = velocityCurrent;
+	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
-	velocityTemp = vTemp;
+	velocityTemp = vTemp1;
 	
 	/*
 	//Advect density
@@ -166,24 +168,25 @@ u32 RCUpdate()
 	if(mouse[MouseButtonLeft]){
 		vec2f pos = Platform::getMousePosition();
 	
-		splatShader->setValue("radius", 30.0f);
+		splatShader->setValue("radius", 300.0f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
-		advectShader->setTexture("x", velocityTemp->getTexture(0));
+		splatShader->setTexture("x", velocityCurrent->getTexture(0));
 	
 
-		Renderer::setRenderTarget(velocityCurrent);
+		Renderer::setRenderTarget(velocityTemp);
 		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 		Renderer::clearDepth(1.0f);
 		Renderer::render(*fullScreenQuad, splatShader);
 		
-		vTemp = velocityCurrent;
+		vTemp2 = velocityCurrent;
 		velocityCurrent = velocityTemp;
-		velocityTemp = vTemp;
+		velocityTemp = vTemp2;
+		
 		
 	}
 	
-	/*
+	
 	//compute divergence
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
 	divergenceShader->setValue("invRes", inv_res);
@@ -192,8 +195,8 @@ u32 RCUpdate()
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, divergenceShader);
-	*/
-	/*
+	
+	
 	//jocobi for pressure
 	jacobiShader->setValue("iBeta", 0.25f);
 	jacobiShader->setValue("invRes", inv_res);
@@ -210,8 +213,7 @@ u32 RCUpdate()
 		pressureCurrent = pressureTemp;
 		pressureTemp = pTemp;
 	}
-	*/
-	/*
+	
 	//compute gradient subtraction
 	subtractGradientShader->setValue("invRes", inv_res);
 	subtractGradientShader->setTexture("w", velocityCurrent->getTexture(0));
@@ -222,10 +224,10 @@ u32 RCUpdate()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, subtractGradientShader);
 
-	vTemp = velocityCurrent;
+	vTemp3 = velocityCurrent;
 	velocityCurrent = velocityTemp;
-	velocityTemp = vTemp;
-	*/
+	velocityTemp = vTemp3;
+	
 	/*
 	visualizeShader->setTexture("visualizeTexture", density->getTexture(0));
 	visualizeShader->setValue("invRes", inv_res);
