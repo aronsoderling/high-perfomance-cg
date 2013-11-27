@@ -112,7 +112,7 @@ u32 RCUpdate()
 {
 	cameraControls();
 	//currentFrameTime = Platform::getFrameTime();
-	timeStep = 10.0f;
+	timeStep = 10.125f;
 	//lastFrameTime = currentFrameTime;
 
 	
@@ -203,7 +203,6 @@ u32 RCUpdate()
 	jacobiShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(pressureTemp);
-
 	for(int i=0; i<=20; i++){
 		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 		Renderer::clearDepth(1.0f);
