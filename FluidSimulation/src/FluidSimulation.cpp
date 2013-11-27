@@ -110,7 +110,7 @@ u32 RCUpdate()
 {
 	cameraControls();
 	//currentFrameTime = Platform::getFrameTime();
-	timeStep = 10.25f;
+	timeStep = 1.25f;
 	//lastFrameTime = currentFrameTime;
 
 	
@@ -127,7 +127,7 @@ u32 RCUpdate()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, advectShader);
 
-	vTemp = velocityCurrent;
+	/*vTemp = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp;
 	
@@ -161,7 +161,7 @@ u32 RCUpdate()
 		velocityTemp = vTemp;
 	}
 	*/
-	/*
+	
 	bool *mouse = Platform::getMouseButtonState();
 	if(mouse[MouseButtonLeft]){
 		vec2f pos = Platform::getMousePosition();
@@ -169,13 +169,20 @@ u32 RCUpdate()
 		splatShader->setValue("radius", 30.0f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
+		advectShader->setTexture("x", velocityTemp->getTexture(0));
+	
 
-		Renderer::setRenderTarget(density);
+		Renderer::setRenderTarget(velocityCurrent);
 		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 		Renderer::clearDepth(1.0f);
 		Renderer::render(*fullScreenQuad, splatShader);
-		}
-	*/
+		
+		vTemp = velocityCurrent;
+		velocityCurrent = velocityTemp;
+		velocityTemp = vTemp;
+		
+	}
+	
 	/*
 	//compute divergence
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
