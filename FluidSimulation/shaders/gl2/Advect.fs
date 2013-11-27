@@ -11,5 +11,5 @@ void main()
 	vec2 u = (texture2D(velocityTexture, invRes * coord).xy * 2.0) - 1.0;
 	vec2 pos = invRes * (coord - timeStep * u);
 	
-	gl_FragData[0] = vec4((texture2D(xTexture, pos).xy + 1.0) / 2.0, 0.0, 1.0);
+	gl_FragData[0] = vec4(texture2D(xTexture, pos).xy, 0.0, 1.0);
 }

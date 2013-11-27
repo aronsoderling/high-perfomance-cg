@@ -92,14 +92,14 @@ void RCInit()
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
-	/*
+	
 	randomShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
-	*/
+	
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
 }
