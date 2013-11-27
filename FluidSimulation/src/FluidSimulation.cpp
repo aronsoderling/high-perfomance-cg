@@ -112,7 +112,7 @@ u32 RCUpdate()
 {
 	cameraControls();
 	//currentFrameTime = Platform::getFrameTime();
-	timeStep = 1.25f;
+	timeStep = 10.0f;
 	//lastFrameTime = currentFrameTime;
 
 	
@@ -168,7 +168,7 @@ u32 RCUpdate()
 	if(mouse[MouseButtonLeft]){
 		vec2f pos = Platform::getMousePosition();
 	
-		splatShader->setValue("radius", 300.0f);
+		splatShader->setValue("radius", 30.0f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
 		splatShader->setTexture("x", velocityCurrent->getTexture(0));
