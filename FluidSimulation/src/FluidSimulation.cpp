@@ -167,6 +167,7 @@ u32 RCUpdate()
 	bool *mouse = Platform::getMouseButtonState();
 	if(mouse[MouseButtonLeft]){
 		vec2f pos = Platform::getMousePosition();
+
 	
 		splatShader->setValue("radius", 30.0f);
 		splatShader->setValue("invRes", inv_res);
