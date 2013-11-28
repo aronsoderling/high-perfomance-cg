@@ -30,6 +30,7 @@ RenderTarget *velocityTemp;
 RenderTarget *vTemp1;
 RenderTarget *vTemp2;
 RenderTarget *vTemp3;
+RenderTarget *vTempl[21];
 RenderTarget *divergence;
 RenderTarget *pressureCurrent;
 RenderTarget *pressureTemp;
@@ -142,13 +143,7 @@ void RCInit()
 u32 RCUpdate()
 {
 	cameraControls();
-	//currentFrameTime = Platform::getFrameTime();
 	timeStep = 0.125f;
-	//lastFrameTime = currentFrameTime;
-
-	
-	printf ("timeStep: %f \n", timeStep);
-
 	
 	//Advect velocity
 	advectShader->setValue("timeStep", timeStep);
@@ -162,20 +157,6 @@ u32 RCUpdate()
 	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp1;
-	
-	
-	/*
-	//Advect density
-	advectShader->setValue("timeStep", timeStep);
-	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
-	advectShader->setTexture("xTexture", density->getTexture(0));
-	advectShader->setValue("invRes", inv_res);
-
-	Renderer::setRenderTarget(density);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
-	Renderer::render(*fullScreenQuad, advectShader);
-	*/
 	/*
 	//Compute jacobi iterations, diffusion
 	jacobiShader->setValue("iBeta", 0.25f);
@@ -189,9 +170,9 @@ u32 RCUpdate()
 		jacobiShader->setTexture("x", velocityCurrent->getTexture(0));
 		jacobiShader->setTexture("b", velocityCurrent->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
-		vTemp = velocityCurrent;
+		vTempl[i] = velocityCurrent;
 		velocityCurrent = velocityTemp;
-		velocityTemp = vTemp;
+		velocityTemp = vTempl[i];
 	}
 	*/
 	
@@ -199,21 +180,18 @@ u32 RCUpdate()
 	if(mouse[MouseButtonLeft]){
 		vec2f pos = Platform::getMousePosition();
 
-	
-		splatShader->setValue("radius", 30.0f);
+		splatShader->setValue("radius", 2.0f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
-		splatShader->setTexture("x", velocityCurrent->getTexture(0));
+		splatShader->setTexture("x", pressureCurrent->getTexture(0));
 	
-
-		Renderer::setRenderTarget(velocityTemp);
+		Renderer::setRenderTarget(pressureTemp);
 		Renderer::render(*fullScreenQuad, splatShader);
 		
-		vTemp2 = velocityCurrent;
-		velocityCurrent = velocityTemp;
-		velocityTemp = vTemp2;	
+		vTemp2 = pressureCurrent;
+		pressureCurrent = pressureTemp;
+		pressureTemp = vTemp2;	
 	}
-	
 	
 	//compute divergence
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
@@ -267,15 +245,6 @@ u32 RCUpdate()
 		boundaryShader->setValue("offset", offset_list[i]);
 		Renderer::render(*boundary[i], boundaryShader);
 	}*/
-
-	/*
-	visualizeShader->setTexture("visualizeTexture", density->getTexture(0));
-	visualizeShader->setValue("invRes", inv_res);
-	Renderer::setRenderTarget(0);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
-	Renderer::render(*fullScreenQuad, visualizeShader);
-	*/
 
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
