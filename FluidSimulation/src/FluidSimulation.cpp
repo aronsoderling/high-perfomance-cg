@@ -18,6 +18,7 @@ ShaderProgram *subtractGradientShader;
 ShaderProgram *randomShader;
 ShaderProgram *splatShader;
 ShaderProgram *visualizeShader;
+ShaderProgram *boundaryShader;
 
 float timeStep;
 float currentFrameTime;
@@ -34,6 +35,10 @@ RenderTarget *pressureCurrent;
 RenderTarget *pressureTemp;
 RenderTarget *pTemp[21];
 RenderTarget *density;
+RenderTarget *vTempb1[4];
+RenderTarget *vTempb2[4];
+RenderTarget *vTempb3[4];
+RenderTarget *pTempb1[21*4];
 
 
 vec4f dissipation;
@@ -43,6 +48,7 @@ VertexArray*	createLine(const vec3f &p0, const vec3f &p1);
 Geometry		*loadFullscreenQuad();
 Geometry		*boundary[4];	/* */
 VertexArray		*boundary_va[4];
+vec2f			offset_list[4];
 
 /* Function for cameracontrols */
 void cameraControls();
@@ -96,27 +102,25 @@ void RCInit()
 	splatShader = SceneGraph::createShaderProgram("SplatSP", 0, "FluidVertex.vs", "Splat.fs", 0);
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
+	boundaryShader = SceneGraph::createShaderProgram("BoundarySP", 0, "FluidVertex.vs", "Boundary.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 	
-	boundary_va[0] = createLine(vec3f(-1.0f, -1.0f, 0.0f), vec3f(-1.0f, 1.0f, 0.0f));
-	boundary_va[1] = createLine(vec3f(-1.0f, 1.0f, 0.0f), vec3f(1.0f, 1.0f, 0.0f));
-	boundary_va[2] = createLine(vec3f(1.0f, 1.0f, 0.0f), vec3f(1.0f, -1.0f, 0.0f));
-	boundary_va[3] = createLine(vec3f(1.0f, -1.0f, 0.0f), vec3f(-1.0f, -1.0f, 0.0f));
+	boundary_va[0] = createLine(vec3f(-0.9f, -0.9f, 0.0f), vec3f(-0.9f, 0.9f, 0.0f));
+	boundary_va[1] = createLine(vec3f(-0.9f, 0.9f, 0.0f), vec3f(0.9f, 0.9f, 0.0f));
+	boundary_va[2] = createLine(vec3f(0.9f, 0.9f, 0.0f), vec3f(0.9f, -0.9f, 0.0f));
+	boundary_va[3] = createLine(vec3f(0.9f, -0.9f, 0.0f), vec3f(-0.9f, -0.9f, 0.0f));
 	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
 	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
 	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
 	boundary[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
+	offset_list[0] = vec2f(1.0f, 0.0f);
+	offset_list[1] = vec2f(0.0f, 1.0f);
+	offset_list[2] = vec2f(x-1.0f, 0.0f);
+	offset_list[3] = vec2f(0.0f, y-1.0f);
 
 	
 	
 	randomShader->setValue("invRes", inv_res);
-
-		Renderer::setRenderTarget(0);
-	for(int i = 0; i <4; i++){
-		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-		Renderer::clearDepth(1.0f);
-		Renderer::render(*boundary[i], randomShader);
-	}
 
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
@@ -145,6 +149,7 @@ u32 RCUpdate()
 	
 	printf ("timeStep: %f \n", timeStep);
 
+	
 	//Advect velocity
 	advectShader->setValue("timeStep", timeStep);
 	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
@@ -152,13 +157,12 @@ u32 RCUpdate()
 	advectShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityTemp);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, advectShader);
 
 	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp1;
+	
 	
 	/*
 	//Advect density
@@ -203,15 +207,11 @@ u32 RCUpdate()
 	
 
 		Renderer::setRenderTarget(velocityTemp);
-		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-		Renderer::clearDepth(1.0f);
 		Renderer::render(*fullScreenQuad, splatShader);
 		
 		vTemp2 = velocityCurrent;
 		velocityCurrent = velocityTemp;
-		velocityTemp = vTemp2;
-		
-		
+		velocityTemp = vTemp2;	
 	}
 	
 	
@@ -220,8 +220,6 @@ u32 RCUpdate()
 	divergenceShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(divergence);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, divergenceShader);
 	
 	
@@ -231,8 +229,6 @@ u32 RCUpdate()
 
 	Renderer::setRenderTarget(pressureTemp);
 	for(int i=0; i<=20; i++){
-		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-		Renderer::clearDepth(1.0f);
 		jacobiShader->setTexture("x", pressureCurrent->getTexture(0));
 		jacobiShader->setTexture("b", divergence->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
@@ -254,7 +250,21 @@ u32 RCUpdate()
 	vTemp3 = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp3;
+
+	boundaryShader->setValue("invRes", inv_res);
+	boundaryShader->setValue("scale", -1.0f);
+
+	Renderer::setRenderTarget(velocityTemp);
 	
+	for(int i = 0; i <4; i++){
+		boundaryShader->setTexture("x", velocityCurrent->getTexture(0));
+		boundaryShader->setValue("offset", offset_list[i]);
+		Renderer::render(*boundary[i], boundaryShader);
+
+		vTempb3[i] = velocityCurrent;
+		velocityCurrent = velocityTemp;
+		velocityTemp = vTempb3[i];
+	}
 	/*
 	visualizeShader->setTexture("visualizeTexture", density->getTexture(0));
 	visualizeShader->setValue("invRes", inv_res);
@@ -263,6 +273,13 @@ u32 RCUpdate()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, visualizeShader);
 	*/
+
+	Renderer::setRenderTarget(0);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	for(int i = 0; i <4; i++){
+		Renderer::render(*boundary[i], randomShader);
+	}
 	return 0;
 }
 
