@@ -10,7 +10,9 @@ void main()
 	float pB = ((texture2D(p, coords - vec2(0.0, invRes.y)).r) * 2.0) - 1.0;
 	float pT = ((texture2D(p, coords + vec2(0.0, invRes.y)).r) * 2.0) - 1.0;
 
-	vec4 uNew = (texture2D(w, coords) * 2.0) - 1.0;
-	uNew.xy = ((uNew.xy - 0.5 * vec2(pR - pL, pT - pB)) + 1.0) / 2.0;
-	gl_FragData[0] = uNew;
+	vec2 uNew = texture2D(w, coords).xy * 2.0 - 1.0;
+	vec2 gradP = vec2(pR - pL, pT - pB) * 0.5;
+
+	uNew = ((uNew - gradP) + 1.0) / 2.0;
+	gl_FragData[0] = vec4(uNew, 0.0, 1.0);
 }

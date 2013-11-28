@@ -12,7 +12,7 @@ void main()
 	vec2 wB = (texture2D(w, coords - vec2(0.0, invRes.y)).rg * 2.0) - 1.0;
 	vec2 wT = (texture2D(w, coords + vec2(0.0, invRes.y)).rg * 2.0) - 1.0;
 
-	float r = 0.5 *(wR.x - wL.x) + (wT.y - wB.y);
+	float r = 0.5 *(wR.x - wL.x + wT.y - wB.y);
 
-	gl_FragData[0] = vec4((r + 1.0) / 2.0, 0.0, 0.0, 1.0);
+	gl_FragData[0] = vec4((r + 1.0) * 0.5, 0.0, 0.0, 1.0);
 }

@@ -19,6 +19,7 @@ ShaderProgram *randomShader;
 ShaderProgram *splatShader;
 ShaderProgram *visualizeShader;
 ShaderProgram *boundaryShader;
+ShaderProgram *resetFloatShader;
 
 float timeStep;
 float currentFrameTime;
@@ -104,6 +105,7 @@ void RCInit()
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
 	boundaryShader = SceneGraph::createShaderProgram("BoundarySP", 0, "FluidVertex.vs", "Boundary.fs", 0);
+	resetFloatShader = SceneGraph::createShaderProgram("ResetFloatSP", 0, "FluidVertex.vs", "resetFloat.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 	
 	boundary_va[0] = createLine(vec3f(-0.999f, -0.999f, 0.0f), vec3f(-0.999f, 0.999f, 0.0f));
@@ -121,7 +123,6 @@ void RCInit()
 
 	
 	
-	randomShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
@@ -130,7 +131,7 @@ void RCInit()
 	Renderer::setRenderTarget(pressureCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
-	Renderer::render(*fullScreenQuad, randomShader);
+	Renderer::render(*fullScreenQuad, resetFloatShader);
 	
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
@@ -202,7 +203,6 @@ u32 RCUpdate()
 	
 	
 	//jocobi for pressure
-	jacobiShader->setValue("iBeta", 0.25f);
 	jacobiShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(pressureTemp);
