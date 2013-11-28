@@ -4,6 +4,8 @@
 
 #include "RenderChimp.h"
 #include <iostream>
+#include <GL/glew.h>
+#include "glut.h"
 
 
 World *world;
@@ -30,7 +32,7 @@ RenderTarget *vTemp3;
 RenderTarget *divergence;
 RenderTarget *pressureCurrent;
 RenderTarget *pressureTemp;
-RenderTarget *pTemp;
+RenderTarget *pTemp[21];
 RenderTarget *density;
 
 
@@ -96,6 +98,10 @@ void RCInit()
 	randomShader->setValue("invRes", inv_res);
 
 	Renderer::setRenderTarget(velocityCurrent);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	Renderer::render(*fullScreenQuad, randomShader);
+	Renderer::setRenderTarget(pressureCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
@@ -209,9 +215,9 @@ u32 RCUpdate()
 		jacobiShader->setTexture("x", pressureCurrent->getTexture(0));
 		jacobiShader->setTexture("b", divergence->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
-		pTemp = pressureCurrent;
+		pTemp[i] = pressureCurrent;
 		pressureCurrent = pressureTemp;
-		pressureTemp = pTemp;
+		pressureTemp = pTemp[i];
 	}
 	
 	//compute gradient subtraction
