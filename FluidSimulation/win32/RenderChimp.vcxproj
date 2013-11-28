@@ -201,6 +201,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\gl2\Advect.fs" />
+    <None Include="..\shaders\gl2\Boundary.fs" />
     <None Include="..\shaders\gl2\Divergence.fs" />
     <None Include="..\shaders\gl2\FluidVertex.vs" />
     <None Include="..\shaders\gl2\Jacobi.fs" />

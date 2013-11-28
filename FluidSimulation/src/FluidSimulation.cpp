@@ -39,7 +39,10 @@ RenderTarget *density;
 vec4f dissipation;
 
 /* Functions foar loading geometry */
-Geometry *loadFullscreenQuad();
+VertexArray*	createLine(const vec3f &p0, const vec3f &p1);
+Geometry		*loadFullscreenQuad();
+Geometry		*boundary[4];	/* */
+VertexArray		*boundary_va[4];
 
 /* Function for cameracontrols */
 void cameraControls();
@@ -78,12 +81,12 @@ void RCInit()
 	world->attachChild(camera);
 	world->setActiveCamera(camera);
 
-	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	density = SceneGraph::createRenderTarget("DensityRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	density = SceneGraph::createRenderTarget("DensityRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -95,7 +98,25 @@ void RCInit()
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 	
+	boundary_va[0] = createLine(vec3f(-1.0f, -1.0f, 0.0f), vec3f(-1.0f, 1.0f, 0.0f));
+	boundary_va[1] = createLine(vec3f(-1.0f, 1.0f, 0.0f), vec3f(1.0f, 1.0f, 0.0f));
+	boundary_va[2] = createLine(vec3f(1.0f, 1.0f, 0.0f), vec3f(1.0f, -1.0f, 0.0f));
+	boundary_va[3] = createLine(vec3f(1.0f, -1.0f, 0.0f), vec3f(-1.0f, -1.0f, 0.0f));
+	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
+	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
+	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
+	boundary[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
+
+	
+	
 	randomShader->setValue("invRes", inv_res);
+
+		Renderer::setRenderTarget(0);
+	for(int i = 0; i <4; i++){
+		Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+		Renderer::clearDepth(1.0f);
+		Renderer::render(*boundary[i], randomShader);
+	}
 
 	Renderer::setRenderTarget(velocityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
@@ -314,6 +335,19 @@ Geometry *loadFullscreenQuad()
 	fsquad->setAttribute("Vertex", 0, 2, ATTRIB_FLOAT32, false);
 
 	return  SceneGraph::createGeometry("FSQuad", fsquad, false);
+}
+
+VertexArray* createLine(const vec3f &p0, const vec3f &p1){
+	vec3f *va = new vec3f[2];
+	va[0] = p0;
+	va[1] = p1;
+	
+	VertexArray *vertex_array = SceneGraph::createVertexArray(0, va, sizeof(vec3f), 
+	2, LINES, USAGE_STATIC);
+	vertex_array->setAttribute("Vertex", 0, 3, ATTRIB_FLOAT32);
+	delete[] va;
+	
+	return vertex_array;
 }
 #endif /* RC_COMPILE_BENCHMARK */
 

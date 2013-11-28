@@ -43,3 +43,4 @@ VertexArray* createTorus(const i32 &res_theta, const i32 &res_phi, const f32 &rA
 
 #endif /* RC_PARAMETRIC_SHAPES_H */
 
+
