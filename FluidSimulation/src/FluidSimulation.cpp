@@ -105,18 +105,18 @@ void RCInit()
 	boundaryShader = SceneGraph::createShaderProgram("BoundarySP", 0, "FluidVertex.vs", "Boundary.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 	
-	boundary_va[0] = createLine(vec3f(-0.9f, -0.9f, 0.0f), vec3f(-0.9f, 0.9f, 0.0f));
-	boundary_va[1] = createLine(vec3f(-0.9f, 0.9f, 0.0f), vec3f(0.9f, 0.9f, 0.0f));
-	boundary_va[2] = createLine(vec3f(0.9f, 0.9f, 0.0f), vec3f(0.9f, -0.9f, 0.0f));
-	boundary_va[3] = createLine(vec3f(0.9f, -0.9f, 0.0f), vec3f(-0.9f, -0.9f, 0.0f));
+	boundary_va[0] = createLine(vec3f(-0.999f, -0.999f, 0.0f), vec3f(-0.999f, 0.999f, 0.0f));
+	boundary_va[1] = createLine(vec3f(-0.999f, 0.999f, 0.0f), vec3f(0.999f, 0.999f, 0.0f));
+	boundary_va[2] = createLine(vec3f(0.999f, 0.999f, 0.0f), vec3f(0.999f, -0.999f, 0.0f));
+	boundary_va[3] = createLine(vec3f(0.999f, -0.999f, 0.0f), vec3f(-0.999f, -0.999f, 0.0f));
 	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
 	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
 	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
 	boundary[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
 	offset_list[0] = vec2f(1.0f, 0.0f);
-	offset_list[1] = vec2f(0.0f, 1.0f);
+	offset_list[1] = vec2f(0.0f, y-1.0f);
 	offset_list[2] = vec2f(x-1.0f, 0.0f);
-	offset_list[3] = vec2f(0.0f, y-1.0f);
+	offset_list[3] = vec2f(0.0f, 1.0f);
 
 	
 	
@@ -143,7 +143,7 @@ u32 RCUpdate()
 {
 	cameraControls();
 	//currentFrameTime = Platform::getFrameTime();
-	timeStep = 10.125f;
+	timeStep = 0.125f;
 	//lastFrameTime = currentFrameTime;
 
 	
@@ -254,17 +254,20 @@ u32 RCUpdate()
 	boundaryShader->setValue("invRes", inv_res);
 	boundaryShader->setValue("scale", -1.0f);
 
-	Renderer::setRenderTarget(velocityTemp);
-	
+	/*Renderer::setRenderTarget(velocityTemp);
 	for(int i = 0; i <4; i++){
 		boundaryShader->setTexture("x", velocityCurrent->getTexture(0));
 		boundaryShader->setValue("offset", offset_list[i]);
 		Renderer::render(*boundary[i], boundaryShader);
-
-		vTempb3[i] = velocityCurrent;
-		velocityCurrent = velocityTemp;
-		velocityTemp = vTempb3[i];
 	}
+
+	Renderer::setRenderTarget(velocityCurrent);
+	for(int i = 0; i <4; i++){
+		boundaryShader->setTexture("x", velocityTemp->getTexture(0));
+		boundaryShader->setValue("offset", offset_list[i]);
+		Renderer::render(*boundary[i], boundaryShader);
+	}*/
+
 	/*
 	visualizeShader->setTexture("visualizeTexture", density->getTexture(0));
 	visualizeShader->setValue("invRes", inv_res);
