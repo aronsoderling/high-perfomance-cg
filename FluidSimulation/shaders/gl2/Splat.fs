@@ -1,6 +1,7 @@
 uniform vec2 invRes;
 uniform vec2 pos;
 uniform float radius;
+uniform float f;
 
 uniform sampler2D x;
 varying vec4 gl_FragCoord;
@@ -13,7 +14,7 @@ void main()
 	
 	float distance = length(pos - gl_FragCoord.xy); 
 	if(distance < radius){
-		color = vec4(c.x + 0.1, c.y, 0.0, 1.0); 
+		color = vec4(c.x + f, c.y, 0.0, 1.0); 
 	}
 	gl_FragData[0] = vec4((color.xy + 1.0) / 2.0, 0.0, 1.0);
 }

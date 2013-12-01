@@ -152,7 +152,7 @@ void RCInit()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
 	
-	randomShader->setValue("color", vec4f(0.0f, 0.0f, 0.0f, 1.0f));
+	randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(densityCurrent);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
@@ -242,34 +242,36 @@ u32 RCUpdate()
 	}
 	*/
 	
-	bool *mouse = Platform::getMouseButtonState();
-	if(mouse[MouseButtonLeft]){
-		vec2f pos = Platform::getMousePosition();
+	//bool *mouse = Platform::getMouseButtonState();
+	//if(mouse[MouseButtonLeft]){
+		//vec2f pos = Platform::getMousePosition();
+		vec2f pos = vec2f(456.0f, 60.0f);
+		//printf("Position: %f, %f", pos.x, pos.y);
 
-		splatShader->setValue("radius",10.0f);
-		//splatShader->setValue("f",10.0f);
+		splatShader->setValue("radius",15.0f);
+		splatShader->setValue("f",0.011f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
-		splatShader->setTexture("x", velocityCurrent->getTexture(0));
+		splatShader->setTexture("x", temperatureCurrent->getTexture(0));
 	
-		Renderer::setRenderTarget(velocityTemp);
+		Renderer::setRenderTarget(temperatureTemp);
 		Renderer::render(*fullScreenQuad, splatShader);
 		
-		iTemp1 = velocityCurrent;
-		velocityCurrent = velocityTemp;
-		velocityTemp = iTemp1;	
-		/*
+		iTemp1 = temperatureCurrent;
+		temperatureCurrent = temperatureTemp;
+		temperatureTemp = iTemp1;	
+		
 		splatShader->setTexture("x", densityCurrent->getTexture(0));
-		//splatShader->setValue("f",2.0f);
-	
+		splatShader->setValue("f", 0.05f);
+
 		Renderer::setRenderTarget(densityTemp);
 		Renderer::render(*fullScreenQuad, splatShader);
 		
 		iTemp1 = densityCurrent;
 		densityCurrent = densityTemp;
 		densityTemp = iTemp1;
-		*/
-	}
+		
+	//}
 	
 	//compute divergence
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
