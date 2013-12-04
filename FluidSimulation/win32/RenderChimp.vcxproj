@@ -213,7 +213,6 @@
     <None Include="..\shaders\gl2\Normals.fs" />
     <None Include="..\shaders\gl2\Normals.vs" />
     <None Include="..\shaders\gl2\Random.fs" />
-    <None Include="..\shaders\gl2\resetFloat.fs" />
     <None Include="..\shaders\gl2\Splat.fs" />
     <None Include="..\shaders\gl2\SubtractGradient.fs" />
     <None Include="..\shaders\gl2\Visualize.fs" />

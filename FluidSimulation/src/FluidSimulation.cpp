@@ -98,14 +98,16 @@ void RCInit()
 	world->setActiveCamera(camera);
 
 	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+
+	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
-	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+
+	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -140,11 +142,6 @@ void RCInit()
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
-
-	Renderer::setRenderTarget(temperatureCurrent);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
-	Renderer::render(*fullScreenQuad, randomShader);
 	
 	randomShader->setValue("color", vec4f(0.5f, 0.0f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(pressureCurrent);
@@ -158,8 +155,10 @@ void RCInit()
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
 
-	splatShader->setTexture("x", densityCurrent->getTexture(0));
-	splatShader->setValue("f", 0.8f);
+	Renderer::setRenderTarget(temperatureCurrent);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	Renderer::render(*fullScreenQuad, randomShader);
 	
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
@@ -176,6 +175,7 @@ u32 RCUpdate()
 	
 	//Advect velocity
 	advectShader->setValue("timeStep", timeStep);
+	advectShader->setValue("dissipation", 1.0f);
 	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
 	advectShader->setTexture("xTexture", velocityCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
@@ -188,6 +188,7 @@ u32 RCUpdate()
 	velocityTemp = vTemp1;
 	
 	//Advect temperature
+	advectShader->setValue("dissipation", 0.9994f);
 	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
 	advectShader->setTexture("xTexture", temperatureCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
@@ -200,6 +201,7 @@ u32 RCUpdate()
 	temperatureTemp = tTemp;
 	
 	//Advect density
+	advectShader->setValue("dissipation", 0.9994f);
 	advectShader->setTexture("xTexture", densityCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
 
@@ -265,7 +267,7 @@ u32 RCUpdate()
 		temperatureTemp = iTemp1;	
 		
 		splatShader->setTexture("x", densityCurrent->getTexture(0));
-		splatShader->setValue("f", 0.8f);
+		splatShader->setValue("f", 0.7f);
 
 		Renderer::setRenderTarget(densityTemp);
 		Renderer::render(*fullScreenQuad, splatShader);

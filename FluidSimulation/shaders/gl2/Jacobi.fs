@@ -17,7 +17,7 @@ void main()
 	float bC = texture2D(b, coords).x * 2.0 - 1.0;
 
 	float c = (xL + xR + xB + xT - bC) *0.25;
-	c = (c + 1.0) / 2.0;
+	c = (c + 1.0) * 0.5;
 
 	gl_FragData[0] = vec4(c, 0.0, 0.0, 1.0);
 }

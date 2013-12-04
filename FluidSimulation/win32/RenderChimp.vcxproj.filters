@@ -532,9 +532,6 @@
     <None Include="..\shaders\gl2\Boundary.fs">
       <Filter>EDAN35</Filter>
     </None>
-    <None Include="..\shaders\gl2\resetFloat.fs">
-      <Filter>EDAN35</Filter>
-    </None>
     <None Include="..\shaders\gl2\Bouyancy.fs">
       <Filter>EDAN35</Filter>
     </None>
