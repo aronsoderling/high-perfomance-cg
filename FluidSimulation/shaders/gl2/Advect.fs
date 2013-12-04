@@ -7,7 +7,6 @@ varying vec4 gl_FragCoord;
 void main()
 {
 	vec2 coord = invRes * gl_FragCoord.xy;
-
 	vec2 u = (texture2D(velocityTexture, coord).xy * 2.0) - 1.0;
 	vec2 pos = coord - timeStep * u;
 	

@@ -169,7 +169,7 @@ void RCInit()
 u32 RCUpdate()
 {
 	cameraControls();
-	timeStep = 0.125f;
+	timeStep = 0.1f;
 	
 	//Advect velocity
 	advectShader->setValue("timeStep", timeStep);
@@ -195,7 +195,7 @@ u32 RCUpdate()
 	tTemp = temperatureCurrent;
 	temperatureCurrent = temperatureTemp;
 	temperatureTemp = tTemp;
-
+	
 	//Advect density
 	advectShader->setTexture("xTexture", densityCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
@@ -248,8 +248,8 @@ u32 RCUpdate()
 		vec2f pos = vec2f(456.0f, 60.0f);
 		//printf("Position: %f, %f", pos.x, pos.y);
 
-		splatShader->setValue("radius",15.0f);
-		splatShader->setValue("f",0.011f);
+		splatShader->setValue("radius",10.0f);
+		splatShader->setValue("f",0.0f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
 		splatShader->setTexture("x", temperatureCurrent->getTexture(0));
@@ -262,7 +262,7 @@ u32 RCUpdate()
 		temperatureTemp = iTemp1;	
 		
 		splatShader->setTexture("x", densityCurrent->getTexture(0));
-		splatShader->setValue("f", 0.05f);
+		splatShader->setValue("f", 0.8f);
 
 		Renderer::setRenderTarget(densityTemp);
 		Renderer::render(*fullScreenQuad, splatShader);
@@ -272,6 +272,18 @@ u32 RCUpdate()
 		densityTemp = iTemp1;
 		
 	//}
+		bouyancyShader->setTexture("t", temperatureCurrent->getTexture(0));
+	bouyancyShader->setTexture("d", densityCurrent->getTexture(0));
+	bouyancyShader->setTexture("v", velocityCurrent->getTexture(0));
+	bouyancyShader->setValue("invRes", inv_res);
+	bouyancyShader->setValue("timeStep", timeStep);
+
+	Renderer::setRenderTarget(velocityTemp);
+	Renderer::render(*fullScreenQuad, bouyancyShader);
+
+	vTemp1 = velocityCurrent;
+	velocityCurrent = velocityTemp;
+	velocityTemp = vTemp1;
 	
 	//compute divergence
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
@@ -325,12 +337,20 @@ u32 RCUpdate()
 		Renderer::render(*boundary[i], boundaryShader);
 	}*/
 
+	/*
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	for(int i = 0; i <4; i++){
 		Renderer::render(*boundary[i], randomShader);
 	}
+	*/
+	Renderer::setRenderTarget(0);
+	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
+	visualizeShader->setTexture("visualizeTexture" ,densityCurrent->getTexture(0));
+	visualizeShader->setValue("invRes", inv_res); 
+	Renderer::render(*fullScreenQuad, visualizeShader);
 	return 0;
 }
 
