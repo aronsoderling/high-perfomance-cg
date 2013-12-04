@@ -23,6 +23,7 @@ ShaderProgram *boundaryShader;
 ShaderProgram *resetFloatShader;
 ShaderProgram *bouyancyShader;
 
+u32 x, y;
 float timeStep;
 float currentFrameTime;
 float lastFrameTime;
@@ -79,7 +80,6 @@ void	renderVelocityBoundary();
 void RCInit()
 {
 	RenderState *state;
-	u32 x, y;
 	vec2f near_far;
 	vec2f res;
 	f32 fov, aspect;
@@ -131,15 +131,15 @@ void RCInit()
 	
 	boundary_va[0] = createLine(vec3f(-0.999f, -0.999f, 0.0f), vec3f(-0.999f, 0.999f, 0.0f));
 	boundary_va[1] = createLine(vec3f(-0.999f, 0.999f, 0.0f), vec3f(0.999f, 0.999f, 0.0f));
-	boundary_va[2] = createLine(vec3f(1.0f, 1.0f, 0.0f), vec3f(1.0f, -1.0f, 0.0f));
-	boundary_va[3] = createLine(vec3f(1.0f, -1.0f, 0.0f), vec3f(-1.0f, -1.0f, 0.0f));
+	boundary_va[2] = createLine(vec3f(0.999f, 0.999f, 0.0f), vec3f(0.999f, -0.999f, 0.0f));
+	boundary_va[3] = createLine(vec3f(0.999f, -0.999f, 0.0f), vec3f(-0.999f, -0.999f, 0.0f));
 	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
 	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
 	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
 	boundary[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
 	offset_list[0] = vec2f(1.0f, 0.0f);
-	offset_list[1] = vec2f(0.0f, y-1.0f);
-	offset_list[2] = vec2f(x-1.0f, 0.0f);
+	offset_list[1] = vec2f(0.0f, -1.0f);
+	offset_list[2] = vec2f(-1.0f, 0.0f);
 	offset_list[3] = vec2f(0.0f, 1.0f);
 
 	
