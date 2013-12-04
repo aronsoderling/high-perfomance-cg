@@ -195,17 +195,9 @@ u32 RCUpdate()
 	advectTemperature();
 	advectDensity();
 	applyBouyancy();
-
 	//diffusion(); //jacobi for velocity
-
-	//bool *mouse = Platform::getMouseButtonState();
-	//if(mouse[MouseButtonLeft]){
-		//vec2f pos = Platform::getMousePosition();
-		//printf("Position: %f, %f", pos.x, pos.y);
-		splatTemperature();
-		splatDensity();
-	//}
-	
+	splatTemperature();
+	splatDensity();
 	computeDivergence();
 	jacobiForPressure();
 	computeGradientSubtraction();
