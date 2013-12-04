@@ -102,10 +102,10 @@ void RCInit()
 	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
+	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_NEAREST);
 	
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -157,6 +157,9 @@ void RCInit()
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	Renderer::render(*fullScreenQuad, randomShader);
+
+	splatShader->setTexture("x", densityCurrent->getTexture(0));
+	splatShader->setValue("f", 0.8f);
 	
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
@@ -249,7 +252,7 @@ u32 RCUpdate()
 		//printf("Position: %f, %f", pos.x, pos.y);
 
 		splatShader->setValue("radius",10.0f);
-		splatShader->setValue("f",0.0f);
+		splatShader->setValue("f",0.3f);
 		splatShader->setValue("invRes", inv_res);
 		splatShader->setValue("pos", pos);
 		splatShader->setTexture("x", temperatureCurrent->getTexture(0));
@@ -272,7 +275,7 @@ u32 RCUpdate()
 		densityTemp = iTemp1;
 		
 	//}
-		bouyancyShader->setTexture("t", temperatureCurrent->getTexture(0));
+	bouyancyShader->setTexture("t", temperatureCurrent->getTexture(0));
 	bouyancyShader->setTexture("d", densityCurrent->getTexture(0));
 	bouyancyShader->setTexture("v", velocityCurrent->getTexture(0));
 	bouyancyShader->setValue("invRes", inv_res);
