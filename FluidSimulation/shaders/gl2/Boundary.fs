@@ -12,5 +12,5 @@ void main()
 	vec2 xvec = (texture2D(x, pos).xy*2.0)-1.0;
 	xvec = (xvec*scale+1.0)*0.5;
 
-	gl_FragData[0] = vec4(xvec, 1.0, 1.0);
+	gl_FragData[0] = vec4(xvec, 0.0, 1.0);
 }

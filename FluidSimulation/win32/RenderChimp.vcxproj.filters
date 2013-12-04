@@ -258,6 +258,9 @@
     <ClInclude Include="..\src\ResourceViewer.h">
       <Filter>Source\Helpers\ResourceViewer</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\FluidSimulation.h">
+      <Filter>EDAN35</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\DefaultObjects.cpp">
@@ -533,6 +536,9 @@
       <Filter>EDAN35</Filter>
     </None>
     <None Include="..\shaders\gl2\Bouyancy.fs">
+      <Filter>EDAN35</Filter>
+    </None>
+    <None Include="..\shaders\gl2\Copy.fs">
       <Filter>EDAN35</Filter>
     </None>
   </ItemGroup>

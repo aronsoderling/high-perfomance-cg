@@ -18,6 +18,7 @@ ShaderProgram *subtractGradientShader;
 ShaderProgram *randomShader;
 ShaderProgram *splatShader;
 ShaderProgram *visualizeShader;
+ShaderProgram *copyShader;
 ShaderProgram *boundaryShader;
 ShaderProgram *resetFloatShader;
 ShaderProgram *bouyancyShader;
@@ -65,6 +66,11 @@ void cameraControls();
 
 vec2f prev_pos;
 vec2f camera_rotation;
+
+// stuffs
+void	copyTexture(RenderTarget *from, RenderTarget *to);
+void	renderVelocityBoundary();
+
 
 /*	
 	setup world and quad
@@ -117,6 +123,7 @@ void RCInit()
 	splatShader = SceneGraph::createShaderProgram("SplatSP", 0, "FluidVertex.vs", "Splat.fs", 0);
 	randomShader = SceneGraph::createShaderProgram("RandomSP", 0, "FluidVertex.vs", "Random.fs", 0);
 	visualizeShader = SceneGraph::createShaderProgram("VisualizeSP", 0, "FluidVertex.vs", "Visualize.fs", 0);
+	copyShader = SceneGraph::createShaderProgram("CopySP", 0, "FluidVertex.vs", "Copy.fs", 0);
 	boundaryShader = SceneGraph::createShaderProgram("BoundarySP", 0, "FluidVertex.vs", "Boundary.fs", 0);
 	resetFloatShader = SceneGraph::createShaderProgram("ResetFloatSP", 0, "FluidVertex.vs", "resetFloat.fs", 0);
 	bouyancyShader = SceneGraph::createShaderProgram("BouyancySP", 0, "FluidVertex.vs", "Bouyancy.fs", 0);
@@ -124,8 +131,8 @@ void RCInit()
 	
 	boundary_va[0] = createLine(vec3f(-0.999f, -0.999f, 0.0f), vec3f(-0.999f, 0.999f, 0.0f));
 	boundary_va[1] = createLine(vec3f(-0.999f, 0.999f, 0.0f), vec3f(0.999f, 0.999f, 0.0f));
-	boundary_va[2] = createLine(vec3f(0.999f, 0.999f, 0.0f), vec3f(0.999f, -0.999f, 0.0f));
-	boundary_va[3] = createLine(vec3f(0.999f, -0.999f, 0.0f), vec3f(-0.999f, -0.999f, 0.0f));
+	boundary_va[2] = createLine(vec3f(1.0f, 1.0f, 0.0f), vec3f(1.0f, -1.0f, 0.0f));
+	boundary_va[3] = createLine(vec3f(1.0f, -1.0f, 0.0f), vec3f(-1.0f, -1.0f, 0.0f));
 	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
 	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
 	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
@@ -183,9 +190,15 @@ u32 RCUpdate()
 	Renderer::setRenderTarget(velocityTemp);
 	Renderer::render(*fullScreenQuad, advectShader);
 
+	copyTexture(velocityTemp, velocityCurrent);
+	
+	renderVelocityBoundary();
+	
+
 	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
 	velocityTemp = vTemp1;
+	
 	
 	//Advect temperature
 	advectShader->setValue("dissipation", 0.9994f);
@@ -246,7 +259,6 @@ u32 RCUpdate()
 		velocityTemp = vTempl[i];
 	}
 	*/
-	
 	//bool *mouse = Platform::getMouseButtonState();
 	//if(mouse[MouseButtonLeft]){
 		//vec2f pos = Platform::getMousePosition();
@@ -342,17 +354,13 @@ u32 RCUpdate()
 		Renderer::render(*boundary[i], boundaryShader);
 	}*/
 
-	/*
+	randomShader->setValue("color", vec4f(0.0f, 0.0f, 1.0f, 1.0f));
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	for(int i = 0; i <4; i++){
 		Renderer::render(*boundary[i], randomShader);
 	}
-	*/
-	Renderer::setRenderTarget(0);
-	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
-	Renderer::clearDepth(1.0f);
 	visualizeShader->setTexture("visualizeTexture" ,densityCurrent->getTexture(0));
 	visualizeShader->setValue("invRes", inv_res); 
 	Renderer::render(*fullScreenQuad, visualizeShader);
@@ -442,5 +450,26 @@ VertexArray* createLine(const vec3f &p0, const vec3f &p1){
 	
 	return vertex_array;
 }
+
+void copyTexture(RenderTarget *from, RenderTarget *to){
+	copyShader->setTexture("copyTexture", from->getTexture(0));
+	copyShader->setValue("invRes", inv_res);
+	Renderer::setRenderTarget(to);
+	Renderer::render(*fullScreenQuad, copyShader);
+}
+
+void renderVelocityBoundary(){
+	boundaryShader->setValue("scale", -1.0f);
+	Renderer::setRenderTarget(velocityTemp);
+
+	// boundary conditions
+	for(int i = 0; i <4; i++){
+		boundaryShader->setTexture("x", velocityCurrent->getTexture(0));
+		boundaryShader->setValue("offset", offset_list[i]);
+
+		Renderer::render(*boundary[i], boundaryShader);
+	}
+}
+
 #endif /* RC_COMPILE_BENCHMARK */
 
