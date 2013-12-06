@@ -14,7 +14,7 @@ void main()
 	
 	float distance = distance(pos, gl_FragCoord.xy); 
 	if(distance < radius){
-		color = vec4(c.x + 0.5 *(f/distance), c.y, 0.0, 1.0); 
+		color = vec4(c.x + 0.2 *(f/distance), c.y, 0.0, 1.0); 
 	}
 	gl_FragData[0] = vec4(color.xy, 0.0, 1.0);
 }

@@ -62,6 +62,8 @@ Geometry		*boundary[4];	/* */
 VertexArray		*boundary_va[4];
 vec2f			offset_list[4];
 
+vec2f			splatPos;
+
 /* Function for cameracontrols */
 void cameraControls();
 
@@ -80,6 +82,7 @@ void	splatTemperature();
 void	splatDensity();
 void	computeDivergence();
 void	jacobiForPressure();
+void	renderPressureBoundary();
 void	computeGradientSubtraction();
 void	printBoundaries();
 void	visualize();
@@ -153,7 +156,7 @@ void RCInit()
 	offset_list[2] = vec2f(-1.0f, 0.0f);
 	offset_list[3] = vec2f(0.0f, 1.0f);
 
-	
+	splatPos = vec2f(200.0f, 30.0f);
 	
 	randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(velocityCurrent);
@@ -186,7 +189,8 @@ u32 RCUpdate()
 	if(mouse[MouseButtonLeft]){
          vec2f pos = Platform::getMousePosition();
          printf("Position: %f, %f", pos.x, pos.y);
-         
+		 pos.y = y-pos.y;
+         splatPos = pos;
 	}
 	
 	advectVelocity();
@@ -199,7 +203,7 @@ u32 RCUpdate()
 	computeDivergence();
 	jacobiForPressure();
 	computeGradientSubtraction();
-	//printBoundaries();
+	printBoundaries();
 	visualize();
 
 	return 0;
@@ -392,11 +396,10 @@ void diffusion(){
 }
 
 void splatTemperature(){
-	vec2f pos = vec2f(200.0f, 30.0f);
 	splatShader->setValue("radius",20.0f);
 	splatShader->setValue("f",0.03f);
 	splatShader->setValue("invRes", inv_res);
-	splatShader->setValue("pos", pos);
+	splatShader->setValue("pos", splatPos);
 	splatShader->setTexture("x", temperatureCurrent->getTexture(0));
 	
 	Renderer::setRenderTarget(temperatureTemp);
@@ -408,11 +411,10 @@ void splatTemperature(){
 }
 
 void splatDensity(){
-	vec2f pos = vec2f(200.0f, 30.0f);
 	splatShader->setValue("radius",20.0f);
 	splatShader->setValue("f",0.8f);
 	splatShader->setValue("invRes", inv_res);
-	splatShader->setValue("pos", pos);
+	splatShader->setValue("pos", splatPos);
 	splatShader->setTexture("x", densityCurrent->getTexture(0));
 
 	Renderer::setRenderTarget(densityTemp);
@@ -443,9 +445,28 @@ void jacobiForPressure(){
 		jacobiShader->setTexture("x", pressureCurrent->getTexture(0));
 		jacobiShader->setTexture("b", divergence->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
+		
+		//renderPressureBoundary();
+
 		pTemp[i] = pressureCurrent;
 		pressureCurrent = pressureTemp;
 		pressureTemp = pTemp[i];
+	}
+}
+
+void renderPressureBoundary(){
+	copyTexture(pressureTemp, pressureCurrent);
+	
+	boundaryShader->setValue("invRes", inv_res);
+	boundaryShader->setValue("scale", 1.0f);
+	Renderer::setRenderTarget(pressureTemp);
+
+	// boundary conditions
+	for(int i = 0; i <4; i++){
+		boundaryShader->setTexture("x", pressureCurrent->getTexture(0));
+		boundaryShader->setValue("offset", offset_list[i]);
+
+		Renderer::render(*boundary[i], boundaryShader);
 	}
 }
 
