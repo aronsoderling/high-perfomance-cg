@@ -1958,6 +1958,11 @@ void Renderer::loadTexture(
 #endif /* RC_IPHONE */
 		switch (format) {
 			default:
+			case TEXTURE_FORMAT_RED:
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RGBA, GL_FLOAT, pixels);
+				bpp = 4;
+				frm = GL_RGBA;
+				break;
 			case TEXTURE_FORMAT_RGBA8:
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 				bpp = 4;

@@ -114,15 +114,15 @@ void RCInit()
 	world->attachChild(camera);
 	world->setActiveCamera(camera);
 
-	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
 
-	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
-	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
 
 	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
 	
@@ -332,7 +332,7 @@ void renderVelocityBoundary(){
 }
 
 void advectTemperature(){
-	advectShader->setValue("dissipation", 0.9994f);
+	advectShader->setValue("dissipation",1.0f);
 	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
 	advectShader->setTexture("xTexture", temperatureCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
@@ -346,7 +346,7 @@ void advectTemperature(){
 }
 
 void advectDensity(){
-	advectShader->setValue("dissipation", 0.9994f);
+	advectShader->setValue("dissipation",1.0f);
 	advectShader->setTexture("xTexture", densityCurrent->getTexture(0));
 	advectShader->setValue("invRes", inv_res);
 

@@ -581,7 +581,8 @@ class SceneGraph {
 
 				bool			depth_buffer,
 				bool			stencil_buffer,
-				TextureFilter_t	textureFilter
+				TextureFilter_t	textureFilter,
+				bool			use_red32 = false
 			);
 
 		/**

@@ -350,11 +350,13 @@ RenderTarget *SceneGraph::createRenderTarget(
 
 		bool					depth_buffer,
 		bool					stencil_buffer,
-		TextureFilter_t			textureFilter
+
+		TextureFilter_t			textureFilter,
+		bool					use_red32
 	)
 {
 	nidentifier = prepNewResourceName<RenderTarget>(nidentifier);
-	RenderTarget *a = new RenderTarget(nidentifier, width, height, n_target_textures, textureFilter, TEXTURE_WRAP_REPEAT, depth_buffer, stencil_buffer);
+	RenderTarget *a = new RenderTarget(nidentifier, width, height, n_target_textures, textureFilter, TEXTURE_WRAP_REPEAT, depth_buffer, stencil_buffer, use_red32);
 	return ensureResourceSanity(a);
 }
 

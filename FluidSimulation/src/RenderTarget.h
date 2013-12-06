@@ -33,7 +33,8 @@ class RenderTarget : public Resource {
 				TextureWrap_t		wrap,
 
 				bool				include_depth_buffer,
-				bool				include_stencil_buffer
+				bool				include_stencil_buffer,
+				bool				use_red32 = false
 			);
 
 		~RenderTarget();

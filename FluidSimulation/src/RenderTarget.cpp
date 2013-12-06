@@ -17,7 +17,8 @@ RenderTarget::RenderTarget(
 		TextureWrap_t		wrap,
 
 		bool				include_depth_buffer,
-		bool				include_stencil_buffer
+		bool				include_stencil_buffer,
+		bool				use_red32
 	) : Resource(nidentifier, NO_PURGE, RESOURCE_RENDER_TARGET)
 {
 	u32 i;
@@ -25,7 +26,7 @@ RenderTarget::RenderTarget(
 	width = nwidth;
 	height = nheight;
 	
-	format = TEXTURE_FORMAT_RGBA8;
+	format = use_red32 ? TEXTURE_FORMAT_RGBA16 : TEXTURE_FORMAT_RGBA8;
 
 	if (n_targets > RC_MAX_RENDER_TARGET_TEXTURES) {
 		REPORT_WARNING("Too many render targets (%d). Only %d allowed", n_targets, RC_MAX_RENDER_TARGET_TEXTURES);
