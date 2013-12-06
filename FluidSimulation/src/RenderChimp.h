@@ -126,8 +126,8 @@
 	#define RC_DEFAULT_DISPLAY_WIDTH				1024
 	#define RC_DEFAULT_DISPLAY_HEIGHT				768
 #else
-	#define RC_DEFAULT_DISPLAY_WIDTH				1024
-	#define RC_DEFAULT_DISPLAY_HEIGHT				768
+	#define RC_DEFAULT_DISPLAY_WIDTH				400
+	#define RC_DEFAULT_DISPLAY_HEIGHT				300
 #endif
 
 /*==============================================================[ Paths ]====*/
