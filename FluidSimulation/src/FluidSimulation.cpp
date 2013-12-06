@@ -166,12 +166,12 @@ void RCInit()
 	Renderer::setRenderTarget(pressureCurrent);
 	Renderer::render(*fullScreenQuad, randomShader);
 	
-	randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
+	/*randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(densityCurrent);
 	Renderer::render(*fullScreenQuad, randomShader);
 
 	Renderer::setRenderTarget(temperatureCurrent);
-	Renderer::render(*fullScreenQuad, randomShader);
+	Renderer::render(*fullScreenQuad, randomShader);*/
 	
 	prev_pos = vec2f(0.0f, 0.0f);
 	camera_rotation = vec2f(0.0f, 0.0f);
@@ -497,7 +497,8 @@ void visualize(){
 	Renderer::setRenderTarget(0);
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
-	visualizeShader->setTexture("visualizeTexture" ,densityCurrent->getTexture(0));
+	visualizeShader->setTexture("densityTexture" ,densityCurrent->getTexture(0));
+	visualizeShader->setTexture("temperatureTexture" , temperatureCurrent->getTexture(0));
 	visualizeShader->setValue("invRes", inv_res); 
 	Renderer::render(*fullScreenQuad, visualizeShader);
 }
