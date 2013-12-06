@@ -396,7 +396,7 @@ void diffusion(){
 void splatTemperature(){
 	vec2f pos = vec2f(456.0f, 60.0f);
 	splatShader->setValue("radius",10.0f);
-	splatShader->setValue("f",0.3f);
+	splatShader->setValue("f",0.03f);
 	splatShader->setValue("invRes", inv_res);
 	splatShader->setValue("pos", pos);
 	splatShader->setTexture("x", temperatureCurrent->getTexture(0));
@@ -412,11 +412,10 @@ void splatTemperature(){
 void splatDensity(){
 	vec2f pos = vec2f(456.0f, 60.0f);
 	splatShader->setValue("radius",10.0f);
-	splatShader->setValue("f",0.3f);
+	splatShader->setValue("f",0.8f);
 	splatShader->setValue("invRes", inv_res);
 	splatShader->setValue("pos", pos);
 	splatShader->setTexture("x", densityCurrent->getTexture(0));
-	splatShader->setValue("f", 0.7f);
 
 	Renderer::setRenderTarget(densityTemp);
 	Renderer::render(*fullScreenQuad, splatShader);
@@ -436,6 +435,10 @@ void computeDivergence(){
 
 void jacobiForPressure(){
 	jacobiShader->setValue("invRes", inv_res);
+
+	Renderer::setRenderTarget(pressureCurrent);
+	Renderer::clearColor(vec4f(0.5f,0.f,0.f,0.f));
+	Renderer::clearDepth(1.0f);
 
 	Renderer::setRenderTarget(pressureTemp);
 	for(int i=0; i<=20; i++){
