@@ -27,14 +27,24 @@ u32 x, y;
 float timeStep;
 float currentFrameTime;
 float lastFrameTime;
+float splatRadius;
+float temperatureImpulse;
+float densityImpulse;
+float dissipation;
+vec2f grid_res;
+vec2f inv_grid_res;
 vec2f inv_res;
 
 RenderTarget *velocityCurrent;
 RenderTarget *velocityTemp;
+RenderTarget *reactionCurrent;
+RenderTarget *reactionTemp;
+RenderTarget *rTemp;
 RenderTarget *vTemp1;
 RenderTarget *vTemp2;
 RenderTarget *iTemp1;
 RenderTarget *iTemp2;
+RenderTarget *iTemp3;
 RenderTarget *vTempl[21];
 RenderTarget *divergence;
 RenderTarget *pressureCurrent;
@@ -51,15 +61,14 @@ RenderTarget *vTempb1[4];
 RenderTarget *vTempb2[4];
 RenderTarget *vTempb3[4];
 RenderTarget *pTempb1[21*4];
+RenderTarget *boundary;
 
-
-vec4f dissipation;
 
 /* Functions foar loading geometry */
 VertexArray*	createLine(const vec3f &p0, const vec3f &p1);
 Geometry		*loadFullscreenQuad();
-Geometry		*boundary[4];	/* */
-VertexArray		*boundary_va[4];
+Geometry		*boundary_list[5];	/* */
+VertexArray		*boundary_va[5];
 vec2f			offset_list[4];
 
 vec2f			splatPos;
@@ -73,13 +82,15 @@ vec2f camera_rotation;
 // stuffs
 void	copyTexture(RenderTarget *from, RenderTarget *to);
 void	advectVelocity();
+void	applyBouyancy();
 void	renderVelocityBoundary();
 void	advectTemperature();
 void	advectDensity();
-void	applyBouyancy();
+void	advectReaction();
 void	diffusion();
-void	splatTemperature();
-void	splatDensity();
+void	splatTemperature(float f, vec2f position);
+void	splatDensity(float f, vec2f position);
+void	splatReaction();
 void	computeDivergence();
 void	jacobiForPressure();
 void	renderPressureBoundary();
@@ -97,18 +108,26 @@ void RCInit()
 	vec2f near_far;
 	vec2f res;
 	f32 fov, aspect;
-
+	splatRadius = 10.0f;
+	densityImpulse = 0.148;
+	temperatureImpulse = 0.04;
+	dissipation = 0.99995;
+	timeStep = 0.09f;
+	//x = 800;
+	//y = 600;
 	world = SceneGraph::createWorld(0);
 	Platform::getDisplaySize(&x, &y);
-
+	//Platform::setDisplay(true, x, y);
 	fov = 1.2f;
 	aspect = 4.0f / 3.0f;
 	near_far.x = 0.1f;
 	near_far.y = 100.0f;
 	inv_res.x = 1.f /  (f32)x;
 	inv_res.y = 1.f / (f32)y;
-
-	dissipation = vec4f(1.0, 1.0, 1.0, 1.0);
+	grid_res.x = x;
+	grid_res.y = y;
+	inv_grid_res.x = 1.0f / grid_res.x;
+	inv_grid_res.y = 1.0f / grid_res.y;
 
 	camera = SceneGraph::createCamera(0);
 	camera->setPerspectiveProjection(fov, aspect, near_far.x, near_far.y);
@@ -117,17 +136,20 @@ void RCInit()
 	world->attachChild(camera);
 	world->setActiveCamera(camera);
 
-	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	velocityTemp = SceneGraph::createRenderTarget("VelocityTempRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	pressureTemp = SceneGraph::createRenderTarget("PressureTempRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	densityTemp = SceneGraph::createRenderTarget("DensityTempRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	temperatureTemp = SceneGraph::createRenderTarget("TemperatureTempRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	reactionTemp = SceneGraph::createRenderTarget("ReactionTempRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
 
-	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
-	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	velocityCurrent = SceneGraph::createRenderTarget("VelocityCurrentRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	pressureCurrent = SceneGraph::createRenderTarget("PressureCurrentRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	densityCurrent = SceneGraph::createRenderTarget("DensityCurrentRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	temperatureCurrent = SceneGraph::createRenderTarget("TemperatureCurrentRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
+	reactionCurrent = SceneGraph::createRenderTarget("ReactionCurrentRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR, true);
 
-	divergence = SceneGraph::createRenderTarget("DivergencetRT", x, y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	divergence = SceneGraph::createRenderTarget("DivergencetRT", grid_res.x, grid_res.y, 1, false, false,TEXTURE_FILTER_BILINEAR);
+	boundary = SceneGraph::createRenderTarget("Border", grid_res.x,grid_res.y,1,false,false,TEXTURE_FILTER_NEAREST, true);
 	
 	//setup shaders
 	advectShader = SceneGraph::createShaderProgram("AdvectSP", 0, "FluidVertex.vs", "Advect.fs", 0);
@@ -143,19 +165,24 @@ void RCInit()
 	bouyancyShader = SceneGraph::createShaderProgram("BouyancySP", 0, "FluidVertex.vs", "Bouyancy.fs", 0);
 	fullScreenQuad = loadFullscreenQuad();
 	
-	boundary_va[0] = createLine(vec3f(-0.999f, -0.999f, 0.0f), vec3f(-0.999f, 0.999f, 0.0f));
-	boundary_va[1] = createLine(vec3f(-0.999f, 0.999f, 0.0f), vec3f(0.999f, 0.999f, 0.0f));
-	boundary_va[2] = createLine(vec3f(0.999f, 0.999f, 0.0f), vec3f(0.999f, -0.999f, 0.0f));
-	boundary_va[3] = createLine(vec3f(0.999f, -0.999f, 0.0f), vec3f(-0.999f, -0.999f, 0.0f));
-	boundary[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
-	boundary[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
-	boundary[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
-	boundary[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
-	offset_list[0] = vec2f(1.0f, 0.0f);
+	
+	boundary_va[0] = createLine(vec3f(-0.9999f, -0.9999f, 0.0f), vec3f(-0.9999f, 0.9999f, 0.0f));
+	boundary_va[1] = createLine(vec3f(-0.9999f, 0.9999f, 0.0f), vec3f(0.9999f, 0.9999f, 0.0f));
+	boundary_va[2] = createLine(vec3f(0.9999f, 0.9999f, 0.0f), vec3f(0.9999f, -0.9999f, 0.0f));
+	boundary_va[3] = createLine(vec3f(0.9999f, -0.9999f, 0.0f), vec3f(-0.9999f, -0.9999f, 0.0f));
+	//boundary_va[4] = createLine(vec3f(-0.9999f, 0.9999f, 0.0f), vec3f(0.9999f, -0.9999f,0.0f));
+	
+	
+	boundary_list[0] = SceneGraph::createGeometry("boundary1", boundary_va[0], false);
+	boundary_list[1] = SceneGraph::createGeometry("boundary2", boundary_va[1], false);
+	boundary_list[2] = SceneGraph::createGeometry("boundary3", boundary_va[2], false);
+	boundary_list[3] = SceneGraph::createGeometry("boundary4", boundary_va[3], false);
+	//boundary_list[4] = SceneGraph::createGeometry("boundary5", boundary_va[4], false);
+	/*offset_list[0] = vec2f(1.0f, 0.0f);
 	offset_list[1] = vec2f(0.0f, -1.0f);
 	offset_list[2] = vec2f(-1.0f, 0.0f);
 	offset_list[3] = vec2f(0.0f, 1.0f);
-
+	*/
 	splatPos = vec2f(200.0f, 30.0f);
 	
 	randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
@@ -165,6 +192,12 @@ void RCInit()
 	randomShader->setValue("color", vec4f(0.5f, 0.0f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(pressureCurrent);
 	Renderer::render(*fullScreenQuad, randomShader);
+
+	randomShader->setValue("color", vec4f(1.0f,0.0f,0.0f,1.0f));
+	Renderer::setRenderTarget(boundary);
+	for(int i = 0; i <4; i++){
+		Renderer::render(*boundary_list[i], randomShader);
+	}
 	
 	/*randomShader->setValue("color", vec4f(0.5f, 0.5f, 0.0f, 1.0f));
 	Renderer::setRenderTarget(densityCurrent);
@@ -184,22 +217,32 @@ void RCInit()
 u32 RCUpdate()
 {
 	cameraControls();
-	timeStep = 0.1f;
 	bool *mouse = Platform::getMouseButtonState();
 	if(mouse[MouseButtonLeft]){
          vec2f pos = Platform::getMousePosition();
-         printf("Position: %f, %f", pos.x, pos.y);
 		 pos.y = y-pos.y;
          splatPos = pos;
 	}
+	if(mouse[MouseButtonRight]){
+		vec2f pos2 = Platform::getMousePosition();
+		pos2.y = y-pos2.y;
+		splatTemperature(0.05, pos2);
+		splatDensity(0.5, pos2);
+	
+	}
+
+	advectShader->setValue("invRes", inv_grid_res);
+	advectShader->setValue("timeStep", timeStep);
 	
 	advectVelocity();
 	advectTemperature();
 	advectDensity();
+	//advectReaction();
 	applyBouyancy();
 	//diffusion(); //jacobi for velocity
-	splatTemperature();
-	splatDensity();
+	splatTemperature(temperatureImpulse, splatPos);
+	splatDensity(densityImpulse, splatPos);
+	splatReaction();
 	computeDivergence();
 	jacobiForPressure();
 	computeGradientSubtraction();
@@ -295,22 +338,23 @@ VertexArray* createLine(const vec3f &p0, const vec3f &p1){
 
 void copyTexture(RenderTarget *from, RenderTarget *to){
 	copyShader->setTexture("copyTexture", from->getTexture(0));
-	copyShader->setValue("invRes", inv_res);
+	copyShader->setValue("invRes", inv_grid_res);
 	Renderer::setRenderTarget(to);
 	Renderer::render(*fullScreenQuad, copyShader);
 }
 
 void advectVelocity(){
-	advectShader->setValue("timeStep", timeStep);
 	advectShader->setValue("dissipation", 1.0f);
-	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
-	advectShader->setTexture("xTexture", velocityCurrent->getTexture(0));
-	advectShader->setValue("invRes", inv_res);
+	advectShader->setValue("k", 0.0f);
+	advectShader->setValue("baseColor", vec4f(0.5f,0.5f,0.0f, 1.0f));
+	advectShader->setTexture("v", velocityCurrent->getTexture(0));
+	advectShader->setTexture("x", velocityCurrent->getTexture(0));
+	advectShader->setTexture("b", boundary->getTexture(0));
 
 	Renderer::setRenderTarget(velocityTemp);
 	Renderer::render(*fullScreenQuad, advectShader);
 	
-	renderVelocityBoundary();
+	//renderVelocityBoundary();
 	
 	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
@@ -320,7 +364,7 @@ void advectVelocity(){
 void renderVelocityBoundary(){
 	copyTexture(velocityTemp, velocityCurrent);
 	
-	boundaryShader->setValue("invRes", inv_res);
+	boundaryShader->setValue("invRes", inv_grid_res);
 	boundaryShader->setValue("scale", -1.0f);
 	Renderer::setRenderTarget(velocityTemp);
 
@@ -329,15 +373,17 @@ void renderVelocityBoundary(){
 		boundaryShader->setTexture("x", velocityCurrent->getTexture(0));
 		boundaryShader->setValue("offset", offset_list[i]);
 
-		Renderer::render(*boundary[i], boundaryShader);
+		Renderer::render(*boundary_list[i], boundaryShader);
 	}
 }
 
 void advectTemperature(){
-	advectShader->setValue("dissipation",0.9994f);
-	advectShader->setTexture("velocityTexture", velocityCurrent->getTexture(0));
-	advectShader->setTexture("xTexture", temperatureCurrent->getTexture(0));
-	advectShader->setValue("invRes", inv_res);
+	advectShader->setValue("baseColor", vec4f(0.0f,0.0f,0.0f, 1.0f));
+	advectShader->setValue("dissipation",dissipation);
+	advectShader->setValue("k", 0.0f);
+	advectShader->setTexture("v", velocityCurrent->getTexture(0));
+	advectShader->setTexture("x", temperatureCurrent->getTexture(0));
+	advectShader->setTexture("b", boundary->getTexture(0));
 
 	Renderer::setRenderTarget(temperatureTemp);
 	Renderer::render(*fullScreenQuad, advectShader);
@@ -348,9 +394,12 @@ void advectTemperature(){
 }
 
 void advectDensity(){
-	advectShader->setValue("dissipation",0.9994f);
-	advectShader->setTexture("xTexture", densityCurrent->getTexture(0));
-	advectShader->setValue("invRes", inv_res);
+	advectShader->setValue("baseColor", vec4f(0.0f,0.0f,0.0f, 1.0f));
+	advectShader->setValue("dissipation",dissipation);
+	advectShader->setValue("k", 0.0f);
+	advectShader->setTexture("v", velocityCurrent->getTexture(0));
+	advectShader->setTexture("x", densityCurrent->getTexture(0));
+	advectShader->setTexture("b", boundary->getTexture(0));
 
 	Renderer::setRenderTarget(densityTemp);
 	Renderer::render(*fullScreenQuad, advectShader);
@@ -360,16 +409,35 @@ void advectDensity(){
 	densityTemp = dTemp;
 }
 
+void advectReaction(){
+	advectShader->setValue("baseColor", vec4f(0.0f,0.0f,0.0f, 1.0f));
+	advectShader->setValue("dissipation",1.0f);
+	advectShader->setTexture("v", velocityCurrent->getTexture(0));
+	advectShader->setTexture("x", reactionCurrent->getTexture(0));
+	advectShader->setTexture("b", boundary->getTexture(0));
+
+	Renderer::setRenderTarget(reactionTemp);
+	Renderer::render(*fullScreenQuad, advectShader);
+
+	rTemp = reactionCurrent;
+	densityCurrent = reactionTemp;
+	reactionTemp = rTemp;
+	advectShader->setValue("k", 0.0f);
+
+}
+
 void applyBouyancy(){
 	//Apply bouyancy
 	bouyancyShader->setTexture("t", temperatureCurrent->getTexture(0));
 	bouyancyShader->setTexture("d", densityCurrent->getTexture(0));
 	bouyancyShader->setTexture("v", velocityCurrent->getTexture(0));
-	bouyancyShader->setValue("invRes", inv_res);
+	bouyancyShader->setValue("invRes", inv_grid_res);
 	bouyancyShader->setValue("timeStep", timeStep);
 
 	Renderer::setRenderTarget(velocityTemp);
 	Renderer::render(*fullScreenQuad, bouyancyShader);
+	
+	//renderVelocityBoundary();
 
 	vTemp1 = velocityCurrent;
 	velocityCurrent = velocityTemp;
@@ -379,7 +447,7 @@ void applyBouyancy(){
 void diffusion(){
 	//Compute jacobi iterations, diffusion
 	jacobiShader->setValue("iBeta", 0.25f);
-	jacobiShader->setValue("invRes", inv_res);
+	jacobiShader->setValue("invRes", inv_grid_res);
 
 	Renderer::setRenderTarget(velocityTemp);
 
@@ -395,11 +463,11 @@ void diffusion(){
 	}
 }
 
-void splatTemperature(){
-	splatShader->setValue("radius",20.0f);
-	splatShader->setValue("f",0.03f);
-	splatShader->setValue("invRes", inv_res);
-	splatShader->setValue("pos", splatPos);
+void splatTemperature(float f, vec2f position){
+	splatShader->setValue("radius",splatRadius);
+	splatShader->setValue("f",f);
+	splatShader->setValue("invRes", inv_grid_res);
+	splatShader->setValue("pos", position);
 	splatShader->setTexture("x", temperatureCurrent->getTexture(0));
 	
 	Renderer::setRenderTarget(temperatureTemp);
@@ -410,11 +478,11 @@ void splatTemperature(){
 	temperatureTemp = iTemp1;	
 }
 
-void splatDensity(){
-	splatShader->setValue("radius",20.0f);
-	splatShader->setValue("f",0.8f);
-	splatShader->setValue("invRes", inv_res);
-	splatShader->setValue("pos", splatPos);
+void splatDensity(float f, vec2f position){
+	splatShader->setValue("radius",splatRadius);
+	splatShader->setValue("f",f);
+	splatShader->setValue("invRes", inv_grid_res);
+	splatShader->setValue("pos", position);
 	splatShader->setTexture("x", densityCurrent->getTexture(0));
 
 	Renderer::setRenderTarget(densityTemp);
@@ -425,16 +493,33 @@ void splatDensity(){
 	densityTemp = iTemp2;
 }
 
+void splatReaction(){
+	splatShader->setValue("radius",20.0f);
+	splatShader->setValue("f",0.5f);
+	splatShader->setValue("invRes", inv_grid_res);
+	splatShader->setValue("pos", splatPos);
+	splatShader->setTexture("x", reactionCurrent->getTexture(0));
+
+	Renderer::setRenderTarget(reactionTemp);
+	Renderer::render(*fullScreenQuad, splatShader);
+		
+	iTemp3 = reactionCurrent;
+	reactionCurrent = reactionTemp;
+	reactionTemp = iTemp3;
+}
+
 void computeDivergence(){
 	divergenceShader->setTexture("w", velocityCurrent->getTexture(0));
-	divergenceShader->setValue("invRes", inv_res);
+	divergenceShader->setTexture("b", boundary->getTexture(0));
+	divergenceShader->setValue("invRes", inv_grid_res);
 
 	Renderer::setRenderTarget(divergence);
 	Renderer::render(*fullScreenQuad, divergenceShader);
 }
 
 void jacobiForPressure(){
-	jacobiShader->setValue("invRes", inv_res);
+	jacobiShader->setValue("invRes", inv_grid_res);
+	jacobiShader->setTexture("b", boundary->getTexture(0));
 
 	Renderer::setRenderTarget(pressureCurrent);
 	Renderer::clearColor(vec4f(0.5f,0.f,0.f,0.f));
@@ -442,8 +527,8 @@ void jacobiForPressure(){
 
 	Renderer::setRenderTarget(pressureTemp);
 	for(int i=0; i<=40; i++){
-		jacobiShader->setTexture("x", pressureCurrent->getTexture(0));
-		jacobiShader->setTexture("b", divergence->getTexture(0));
+		jacobiShader->setTexture("p", pressureCurrent->getTexture(0));
+		jacobiShader->setTexture("d", divergence->getTexture(0));
 		Renderer::render(*fullScreenQuad, jacobiShader);
 		
 		//renderPressureBoundary();
@@ -457,7 +542,7 @@ void jacobiForPressure(){
 void renderPressureBoundary(){
 	copyTexture(pressureTemp, pressureCurrent);
 	
-	boundaryShader->setValue("invRes", inv_res);
+	boundaryShader->setValue("invRes", inv_grid_res);
 	boundaryShader->setValue("scale", 1.0f);
 	Renderer::setRenderTarget(pressureTemp);
 
@@ -466,17 +551,20 @@ void renderPressureBoundary(){
 		boundaryShader->setTexture("x", pressureCurrent->getTexture(0));
 		boundaryShader->setValue("offset", offset_list[i]);
 
-		Renderer::render(*boundary[i], boundaryShader);
+		Renderer::render(*boundary_list[i], boundaryShader);
 	}
 }
 
 void computeGradientSubtraction(){
-	subtractGradientShader->setValue("invRes", inv_res);
+	subtractGradientShader->setValue("invRes", inv_grid_res);
 	subtractGradientShader->setTexture("w", velocityCurrent->getTexture(0));
 	subtractGradientShader->setTexture("p", pressureCurrent->getTexture(0));
+	subtractGradientShader->setTexture("b", boundary->getTexture(0));
 
 	Renderer::setRenderTarget(velocityTemp);
 	Renderer::render(*fullScreenQuad, subtractGradientShader);
+
+	//renderVelocityBoundary();
 
 	vTemp2 = velocityCurrent;
 	velocityCurrent = velocityTemp;
@@ -489,7 +577,7 @@ void printBoundaries(){
 	Renderer::clearColor(vec4f(0.f,0.f,0.f,0.f));
 	Renderer::clearDepth(1.0f);
 	for(int i = 0; i <4; i++){
-		Renderer::render(*boundary[i], randomShader);
+		Renderer::render(*boundary_list[i], randomShader);
 	}
 }
 
@@ -499,7 +587,8 @@ void visualize(){
 	Renderer::clearDepth(1.0f);
 	visualizeShader->setTexture("densityTexture" ,densityCurrent->getTexture(0));
 	visualizeShader->setTexture("temperatureTexture" , temperatureCurrent->getTexture(0));
-	visualizeShader->setValue("invRes", inv_res); 
+	visualizeShader->setTexture("reactionTexture" , reactionCurrent->getTexture(0));
+	visualizeShader->setValue("invRes", inv_grid_res); 
 	Renderer::render(*fullScreenQuad, visualizeShader);
 }
 
